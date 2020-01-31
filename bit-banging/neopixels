@@ -1,0 +1,78 @@
+			
+			;cpsie	i
+init
+			mov		r3, #2              ; the number of pixels to do this for
+			ldr		r1, =0xAAAAAA       ; load bits to be loaded
+			ldr		r5, =0x40021418     ; set r5 to the GPIOF register + 18 offset for BSRR
+			ldr		r6, =0x2000         ; pin 13 HIGH mask
+			ldr		r9, =0x20000000     ; pin 13 LOW mask
+			mov		r8, #1              ; we use this to test bits
+			
+			
+send_pixel
+			cmp		r3, #0        ; test if we are done
+			beq		done          ; if we are out of pixels, finish up
+			mov		r4, #23       ; we are going to send 24 bits, prime it here.
+			sub		r3, r3, #1    ; decrement this pixel
+			
+send_bit
+			lsl		r2, r8, r4    ; build the mask by shifting over the number of bits we have
+			tst		r1, r2        ; check the mask against the bits we are loading.
+			bne		send_one      ; send a one
+			b		send_zero     ; otherwise, send a zero
+			
+			;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+send_one
+			str		r6, [r5]            ; set pin 13 HIGH
+			
+			;;		delay for ~ 800ns
+			mov		r0, #36
+delay_T1H
+			subs		r0, r0, #1
+			bne		delay_T1H
+			;;		end delay
+			
+			str		r9, [r5]            ; set pin 13 LOW
+			
+			;;		delay for ~ 450ns
+			mov		r0, #20
+delay_T1L
+			subs		r0, r0, #1
+			bne		delay_T1L
+			;;		end delay
+			
+			b		bit_sent
+			;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+send_zero
+			str		r6, [r5]            ; set pin 13 HIGH
+			
+			;;		delay for ~ 400ns
+			mov		r0, #17
+delay_T0H
+			subs		r0, r0, #1
+			bne		delay_T0H
+			;;		end delay
+			
+			str		r9, [r5]            ; set pin 13 LOW
+			
+			;;		delay for ~ 850ns
+			mov		r0, #38
+delay_T0L
+			subs		r0, r0, #1
+			bne		delay_T0L
+			;;		end delay
+			
+			b		bit_sent
+			;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+			
+bit_sent
+			cmp		r4, #0       ; was that the last bit?
+			sub		r4, r4, #1   ; otherwise, decrement our counter
+			beq		send_pixel   ; if so, go to the next pixel
+			b		send_bit     ; and send the next bit
+			
+			
+			
+			
+done
+			;cpie	i
