@@ -1,3 +1,3 @@
 <img src="smartbase.jpg">
 
-# SmartBase Running on a STM32
+# The SmartBase - IoT Adjustable Bed for Comfort and Safety
